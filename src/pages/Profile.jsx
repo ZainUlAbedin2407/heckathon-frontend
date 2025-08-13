@@ -1,12 +1,17 @@
-import React, { useState } from "react";
-import axiosInstance from "../utils/axiosInstance"; // ✅ update this path as needed
+import { useState } from "react";
 import { MdDelete, MdLockReset } from "react-icons/md";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { clearUser, setUser } from "../redux/slices/authSlice";
+import useApi from "../hooks/useApi";
 
 const UserProfile = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const { user } = useSelector((state) => state.auth);
+  console.log(user);
+
   const [bio, setBio] = useState(user?.bio || "");
   const [editing, setEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -14,8 +19,11 @@ const UserProfile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  // API hook
+  const { callApi, loading } = useApi();
+
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    dispatch(clearUser());
     toast.success("User logged out successfully");
     setTimeout(() => {
       navigate("/login");
@@ -23,62 +31,53 @@ const UserProfile = () => {
   };
 
   const handleUpdateBio = async () => {
-    try {
-      const res = await axiosInstance.put(`/api/users/${user._id}`, { bio });
-
-      const updatedUser = res.data.data;
-      localStorage.setItem(
-        "user",
-        JSON.stringify({ ...user, bio: updatedUser.bio })
-      );
+    const res = await callApi("put", `/api/users/${user._id}`, { bio });
+    if (res?.data) {
+      dispatch(setUser({ ...user, bio: res.data.bio }));
       toast.success("Bio updated successfully!");
       setEditing(false);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update bio.");
     }
   };
 
   const handleDelete = async () => {
-    try {
-      await axiosInstance.delete(`/api/users/${user._id}`);
+    const res = await callApi("delete", `/api/users/${user._id}`);
+    if (res) {
       toast.success("Account deleted successfully.");
-      localStorage.removeItem("user");
+      dispatch(clearUser());
       setTimeout(() => {
         navigate("/register");
       }, 1500);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete account.");
     }
   };
 
   const handleChangePassword = async () => {
-    try {
-      await axiosInstance.patch(`/api/users/change-password`, {
-        currentPassword,
-        newPassword,
-      });
+    const res = await callApi("patch", `/api/users/change-password`, {
+      currentPassword,
+      newPassword,
+    });
 
+    if (res) {
       toast.success("Password changed successfully.");
       setShowPasswordModal(false);
       setCurrentPassword("");
       setNewPassword("");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to change password.");
     }
   };
 
   return (
     <div className="py-10 px-4 bg-gray-50 min-h-screen">
       <div className="max-w-lg mx-auto bg-white rounded-lg shadow-md p-6">
+        {/* Profile header */}
         <div className="flex flex-col items-center space-y-2">
           <img
-            src={user.avatar === "" ? "./profile-icon.jpg" : user.avatar}
+            src={user.avatar || "./profile-icon.jpg"}
             alt="User"
             className="w-24 h-24 rounded-full border-2 border-[#0c363c]"
           />
           <h2 className="text-xl font-bold text-[#0c363c]">My Profile</h2>
         </div>
 
+        {/* Info */}
         <div className="mt-6 space-y-4">
           <div>
             <label className="text-gray-600">Username</label>
@@ -105,7 +104,7 @@ const UserProfile = () => {
 
           <div className="flex gap-3">
             <button
-              className="bg-[#0c363c] hover:bg-[#094244] text-white px-4 py-2 rounded cursor-pointer"
+              className="bg-[#0c363c] hover:bg-[#094244] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
               onClick={() => {
                 if (editing) {
                   handleUpdateBio();
@@ -113,8 +112,9 @@ const UserProfile = () => {
                   setEditing(true);
                 }
               }}
+              disabled={loading}
             >
-              {editing ? "Save Bio" : "Edit Bio"}
+              {loading ? "Saving..." : editing ? "Save Bio" : "Edit Bio"}
             </button>
 
             <button
@@ -125,6 +125,7 @@ const UserProfile = () => {
             </button>
           </div>
 
+          {/* Actions */}
           <div className="flex justify-between items-center pt-4 border-t">
             <button
               className="flex items-center gap-0.5 cursor-pointer text-blue-600 text-sm hover:underline"
@@ -134,7 +135,7 @@ const UserProfile = () => {
             </button>
 
             <button
-              className="flex items-center  text-red-600 cursor-pointer text-sm hover:underline"
+              className="flex items-center text-red-600 cursor-pointer text-sm hover:underline"
               onClick={() => setShowDeleteModal(true)}
             >
               <MdDelete /> Delete Account
@@ -145,7 +146,7 @@ const UserProfile = () => {
 
       {/* Change Password Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-30 z-50 p-5">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 p-5">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-semibold mb-4 text-[#0c363c]">
               Change Password
@@ -168,14 +169,16 @@ const UserProfile = () => {
               <button
                 onClick={() => setShowPasswordModal(false)}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleChangePassword}
-                className="px-4 py-2 bg-[#0c363c] text-white rounded hover:bg-[#094244] cursor-pointer"
+                className="px-4 py-2 bg-[#0c363c] text-white rounded hover:bg-[#094244] cursor-pointer disabled:opacity-50"
+                disabled={loading}
               >
-                Update
+                {loading ? "Updating..." : "Update"}
               </button>
             </div>
           </div>
@@ -184,7 +187,7 @@ const UserProfile = () => {
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/70 p-5 bg-opacity-30 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 p-5 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-semibold mb-4 text-red-600">
               Confirm Account Deletion
@@ -197,14 +200,16 @@ const UserProfile = () => {
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer disabled:opacity-50"
+                disabled={loading}
               >
-                Delete
+                {loading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

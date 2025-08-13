@@ -7,17 +7,22 @@ import {
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Toaster } from "react-hot-toast";
+import { loadUserFromStorage } from "./redux/slices/authSlice";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
-import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import VerifyEmail from "./pages/VerifyEmail";
-import { loadUserFromStorage } from "./redux/slices/authSlice";
+import AdminHomePage from "./pages/AdminHomePage";
+import UserManagement from "./components/Admin/UserManagement";
+import ProductManagemnet from "./components/Admin/ProductManagemnet";
+import EditProductPage from "./components/Admin/EditProductPage";
+import OrderManagment from "./components/Admin/OrderManagment";
+import AdminLayout from "./components/admin/AdminLayout";
 // import ResetPassword from "./pages/ResetPassword";
 // import ForgotPassword from "./pages/Forgot-password";
 
@@ -123,15 +128,23 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      {
-        path: "/admin",
-        element: (
-          <ProtectedRoute role="admin">
-            <AdminDashboard />
-          </ProtectedRoute>
-        ),
-      },
+
       { path: "*", element: <NotFound /> },
+    ],
+  },
+  {
+    path: "/admin",
+    element: (
+      <ProtectedRoute role="admin">
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <AdminHomePage /> },
+      { path: "users", element: <UserManagement /> },
+      { path: "products", element: <ProductManagemnet /> },
+      { path: "products/:id/edit", element: <EditProductPage /> },
+      { path: "orders", element: <OrderManagment /> },
     ],
   },
 ]);

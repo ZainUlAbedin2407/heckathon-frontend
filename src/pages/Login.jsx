@@ -37,8 +37,19 @@ const Login = () => {
           navigate("/");
         }, 1500);
       }
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message || "Login failed");
+    } catch (err) {
+      if (
+        err.response?.status === 401 &&
+        err.response?.data?.message?.includes("verify your email")
+      ) {
+        const emailFromRes = err.response?.data?.email;
+        if (emailFromRes) {
+          localStorage.setItem("email", emailFromRes);
+          navigate("/verify-email");
+          return;
+        }
+      }
+      setErrorMessage(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
