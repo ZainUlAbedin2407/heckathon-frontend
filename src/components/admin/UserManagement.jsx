@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaTrash, FaUserPlus } from "react-icons/fa";
 import axiosInstance from "../../utils/axiosInstance";
 import defaultAvatar from "/profile-icon.jpg"; // Make sure this path is correct

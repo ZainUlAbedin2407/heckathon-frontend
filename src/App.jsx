@@ -18,7 +18,7 @@ import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import VerifyEmail from "./pages/VerifyEmail";
 import AdminHomePage from "./pages/AdminHomePage";
-import UserManagement from "./components/Admin/UserManagement";
+import UserManagement from "./components/admin/UserManagement";
 import ProductManagemnet from "./components/Admin/ProductManagemnet";
 import EditProductPage from "./components/Admin/EditProductPage";
 import OrderManagment from "./components/Admin/OrderManagment";
