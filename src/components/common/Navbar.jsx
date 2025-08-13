@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import { HiBars3BottomRight, HiOutlineUser } from "react-icons/hi2";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
 import SearchBar from "./SearchBar";
-import { useEffect } from "react"; // make sure it's already imported
+import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
+  const user = useSelector((state) => state.auth.user); 
 
   const toggleNavDrawer = () => {
     setNavDrawerOpen(!navDrawerOpen);
@@ -27,12 +28,12 @@ const Navbar = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+  // useEffect(() => {
+  //   const storedUser = localStorage.getItem("user");
+  //   if (storedUser) {
+  //     setUser(JSON.parse(storedUser));
+  //   }
+  // }, []);
   return (
     <>
       <nav className="container max-w-screen-xl  mx-auto flex items-center justify-between py-5 px-4 md:px-6">
@@ -108,6 +109,14 @@ const Navbar = () => {
                   Register
                 </Link>
               </>
+            )}
+            {user?.isAdmin && (
+              <Link
+                to="/admin"
+                className="px-4 py-1.5 border border-[#0c363c] text-[#0c363c] rounded hover:bg-[#0c363c] hover:text-white text-sm transition"
+              >
+                Admin
+              </Link>
             )}
           </div>
 
